@@ -254,11 +254,11 @@ function init() {
             case 'w':
                 mat4.translate(transformMatrix1, transformMatrix1, [0, moveSpeed, 0]);
                 break;
-            case 's':
-                mat4.translate(transformMatrix1, transformMatrix1, [0, -moveSpeed, 0]);
-                break;
             case 'a':
                 mat4.translate(transformMatrix1, transformMatrix1, [-moveSpeed, 0, 0]); 
+                break;
+            case 's':
+                mat4.translate(transformMatrix1, transformMatrix1, [0, -moveSpeed, 0]);
                 break;
             case 'd':
                 mat4.translate(transformMatrix1, transformMatrix1, [moveSpeed, 0, 0]); 
@@ -272,11 +272,9 @@ window.onload = init;
 
 </script>
 </head>
-<body>
-
-<div id="canvas-holder">
-   <canvas id="webglcanvas"></canvas>
-</div>
-
-</body>
+  <body>
+    <div id="canvas-holder">
+      <canvas id="webglcanvas"></canvas>
+    </div>
+  </body>
 </html>
