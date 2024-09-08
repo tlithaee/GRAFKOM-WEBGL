@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Moving cubes in WEBGL</title>
+<style>
+  body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden; 
+  }
+
+  #webglcanvas {
+      display: block;
+      width: 100vw; 
+      height: 100vh; 
+  }
+</style>
+
+<script type="x-shader/x-vertex" id="vshader-source">
+    attribute vec3 a_coords;
+    uniform mat4 u_transformMatrix;
+    uniform mat4 u_projectionMatrix;
+    void main() {
+        vec4 coords = vec4(a_coords, 1.0);
+        gl_Position = u_projectionMatrix * u_transformMatrix * coords;
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fshader-source">
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+       precision highp float;
+    #else
+       precision mediump float;
+    #endif
+    uniform vec4 color;
+    void main() {
+        gl_FragColor = color;
+    }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+
+<script>
+"use strict";
+
+let gl;  
+let a_coords_loc;         
+let a_coords_buffer;      
+let u_color;               
+let u_transformMatrix;    
+let u_projectionMatrix;
+let projectionMatrix = mat4.create(); 
+let transformMatrix = mat4.create(); 
+let moveSpeed = 0.05; 
+
+mat4.translate(transformMatrix, transformMatrix, [0, 0, -5]); 
+
+/* Draws a WebGL primitive. */
+function drawPrimitive(primitiveType, color, vertices) {
+     gl.enableVertexAttribArray(a_coords_loc);
+     gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
+     gl.uniform4fv(u_color, color);
+     gl.vertexAttribPointer(a_coords_loc, 3, gl.FLOAT, false, 0, 0);
+     gl.drawArrays(primitiveType, 0, vertices.length / 3);
+}
+
+function draw() {
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.uniformMatrix4fv(u_transformMatrix, false, transformMatrix);
+    gl.uniformMatrix4fv(u_projectionMatrix, false, projectionMatrix);
+
+    // Hijau -> depan
+    drawPrimitive(gl.TRIANGLES, [0, 1, 0, 1], [
+        -0.5, -0.5,  0.5,
+         0.5, -0.5,  0.5,
+         0.5,  0.5,  0.5,
+        -0.5, -0.5,  0.5,
+         0.5,  0.5,  0.5,
+        -0.5,  0.5,   0.5
+    ]);
+
+    // Pink -> kiri
+    drawPrimitive(gl.TRIANGLES, [1, 0, 1, 1], [
+        -0.5, -0.5, -0.5,
+        -0.5,  0.5, -0.5,
+        -0.5,  0.5,  0.5,
+        -0.5, -0.5, -0.5,
+        -0.5,  0.5,  0.5,
+        -0.5, -0.5,  0.5
+    ]);
+
+    // Biru -> belakang
+    drawPrimitive(gl.TRIANGLES, [0, 0, 1, 1], [
+         0.5, -0.5, -0.5,
+         0.5,  0.5, -0.5,
+        -0.5,  0.5, -0.5,
+         0.5, -0.5, -0.5,
+        -0.5,  0.5, -0.5,
+        -0.5, -0.5, -0.5
+    ]);
+
+    // Kuning -> bawah
+    drawPrimitive(gl.TRIANGLES, [1, 1, 0, 1], [
+        -0.5, -0.5, -0.5,
+         0.5, -0.5, -0.5,
+         0.5, -0.5,  0.5,
+        -0.5, -0.5, -0.5,
+         0.5, -0.5,  0.5,
+        -0.5, -0.5,  0.5
+    ]);
+
+    // Biru muda -> kanan
+    drawPrimitive(gl.TRIANGLES, [0, 1, 1, 1], [
+         0.5, -0.5,  0.5,
+         0.5,  0.5,  0.5,
+         0.5,  0.5, -0.5,
+         0.5, -0.5,  0.5,
+         0.5,  0.5, -0.5,
+         0.5, -0.5, -0.5
+    ]);
+
+    // Merah -> atas
+    drawPrimitive(gl.TRIANGLES, [1, 0, 0, 1], [
+        -0.5,  0.5, -0.5,
+         0.5,  0.5, -0.5,
+         0.5,  0.5,  0.5,
+        -0.5,  0.5, -0.5,
+         0.5,  0.5,  0.5,
+        -0.5,  0.5,  0.5
+    ]);
+}
+
+function initGL() {
+    let prog = createProgram(gl, "vshader-source", "fshader-source");
+    gl.useProgram(prog);
+    a_coords_loc = gl.getAttribLocation(prog, "a_coords");
+    u_color = gl.getUniformLocation(prog, "color");
+    u_transformMatrix = gl.getUniformLocation(prog, "u_transformMatrix"); 
+    u_projectionMatrix = gl.getUniformLocation(prog, "u_projectionMatrix");
+    a_coords_buffer = gl.createBuffer();
+    gl.enable(gl.DEPTH_TEST);  
+}
+
+function createProgram(gl, vertexShaderID, fragmentShaderID) {
+    function getTextContent(elementID) {
+        let element = document.getElementById(elementID);
+        let node = element.firstChild;
+        let str = "";
+        while (node) {
+            if (node.nodeType === 3) 
+                str += node.textContent;
+            node = node.nextSibling;
+        }
+        return str;
+    }
+    let vertexShaderSource, fragmentShaderSource;
+    try {
+        vertexShaderSource = getTextContent(vertexShaderID);
+        fragmentShaderSource = getTextContent(fragmentShaderID);
+    } catch (e) {
+        throw new Error("Error: Could not get shader source code from script elements.");
+    }
+    let vsh = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vsh, vertexShaderSource);
+    gl.compileShader(vsh);
+    if (!gl.getShaderParameter(vsh, gl.COMPILE_STATUS)) {
+        throw new Error("Error in vertex shader:  " + gl.getShaderInfoLog(vsh));
+    }
+    let fsh = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fsh, fragmentShaderSource);
+    gl.compileShader(fsh);
+    if (!gl.getShaderParameter(fsh, gl.COMPILE_STATUS)) {
+        throw new Error("Error in fragment shader:  " + gl.getShaderInfoLog(fsh));
+    }
+    let prog = gl.createProgram();
+    gl.attachShader(prog, vsh);
+    gl.attachShader(prog, fsh);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        throw new Error("Link error in program:  " + gl.getProgramInfoLog(prog));
+    }
+    return prog;
+}
+
+function resizeCanvas() {
+  let canvas = document.getElementById("webglcanvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  gl.viewport(0, 0, canvas.width, canvas.height);
+
+  let aspect = canvas.width / canvas.height;
+  mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 1000.0); 
+
+  draw();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+function init() {
+    try {
+        let canvas = document.getElementById("webglcanvas");
+        gl = canvas.getContext("webgl");
+        if (!gl) {
+            throw "Browser does not support WebGL";
+        }
+    } catch (e) {
+        document.getElementById("canvas-holder").innerHTML =
+            "<p>Sorry, could not get a WebGL graphics context.</p>";
+        return;
+    }
+    try {
+        initGL();
+
+    } catch (e) {
+        document.getElementById("canvas-holder").innerHTML =
+            "<p>Sorry, could not initialize the WebGL graphics context: " + e.message + "</p>";
+        return;
+    }
+
+    resizeCanvas();
+    draw();
+
+    window.addEventListener('keydown', function(event) {
+        switch(event.key) {
+            case 'w':
+                mat4.translate(transformMatrix, transformMatrix, [0, moveSpeed, 0]);
+                break;
+            case 's':
+                mat4.translate(transformMatrix, transformMatrix, [0, -moveSpeed, 0]);
+                break;
+            case 'a':
+                mat4.translate(transformMatrix, transformMatrix, [-moveSpeed, 0, 0]); 
+                break;
+            case 'd':
+                mat4.translate(transformMatrix, transformMatrix, [moveSpeed, 0, 0]); 
+                break;
+        }
+        draw();
+    });
+}
+
+window.onload = init;
+
+</script>
+</head>
+<body>
+
+<div id="canvas-holder">
+   <canvas id="webglcanvas"></canvas>
+</div>
+
+</body>
+</html>
