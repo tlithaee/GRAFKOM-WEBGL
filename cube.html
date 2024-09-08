@@ -50,12 +50,13 @@ let u_color;
 let u_transformMatrix;    
 let u_projectionMatrix;
 let projectionMatrix = mat4.create(); 
-let transformMatrix = mat4.create(); 
+let transformMatrix1 = mat4.create(); 
+let transformMatrix2 = mat4.create();
 let moveSpeed = 0.05; 
 
-mat4.translate(transformMatrix, transformMatrix, [0, 0, -5]); 
+mat4.translate(transformMatrix1, transformMatrix1, [0, 0, -5]); 
+mat4.translate(transformMatrix2, transformMatrix2, [1.5, 0, -5]); 
 
-/* Draws a WebGL primitive. */
 function drawPrimitive(primitiveType, color, vertices) {
      gl.enableVertexAttribArray(a_coords_loc);
      gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
@@ -69,7 +70,8 @@ function draw() {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(u_transformMatrix, false, transformMatrix);
+    // cube 1
+    gl.uniformMatrix4fv(u_transformMatrix, false, transformMatrix1);
     gl.uniformMatrix4fv(u_projectionMatrix, false, projectionMatrix);
 
     // Hijau -> depan
@@ -130,6 +132,29 @@ function draw() {
         -0.5,  0.5, -0.5,
          0.5,  0.5,  0.5,
         -0.5,  0.5,  0.5
+    ]);
+
+    // cube 2
+    gl.uniformMatrix4fv(u_transformMatrix, false, transformMatrix2);
+
+    // Merah tua -> depan
+    drawPrimitive(gl.TRIANGLES, [0.5, 0, 0, 0.1], [
+        -0.5, -0.5,  0.5,
+         0.5, -0.5,  0.5,
+         0.5,  0.5,  0.5,
+        -0.5, -0.5,  0.5,
+         0.5,  0.5,  0.5,
+        -0.5,  0.5,   0.5
+    ]);
+
+    // Abu2 -> kiri
+    drawPrimitive(gl.TRIANGLES, [0.1, 0.1, 0.1, 0.5], [
+        -0.5, -0.5, -0.5,
+        -0.5,  0.5, -0.5,
+        -0.5,  0.5,  0.5,
+        -0.5, -0.5, -0.5,
+        -0.5,  0.5,  0.5,
+        -0.5, -0.5,  0.5
     ]);
 }
 
@@ -227,16 +252,16 @@ function init() {
     window.addEventListener('keydown', function(event) {
         switch(event.key) {
             case 'w':
-                mat4.translate(transformMatrix, transformMatrix, [0, moveSpeed, 0]);
+                mat4.translate(transformMatrix1, transformMatrix1, [0, moveSpeed, 0]);
                 break;
             case 's':
-                mat4.translate(transformMatrix, transformMatrix, [0, -moveSpeed, 0]);
+                mat4.translate(transformMatrix1, transformMatrix1, [0, -moveSpeed, 0]);
                 break;
             case 'a':
-                mat4.translate(transformMatrix, transformMatrix, [-moveSpeed, 0, 0]); 
+                mat4.translate(transformMatrix1, transformMatrix1, [-moveSpeed, 0, 0]); 
                 break;
             case 'd':
-                mat4.translate(transformMatrix, transformMatrix, [moveSpeed, 0, 0]); 
+                mat4.translate(transformMatrix1, transformMatrix1, [moveSpeed, 0, 0]); 
                 break;
         }
         draw();
